@@ -47,6 +47,22 @@ export const UserProvider = ({ children }) => {
     }
   }
 
+  const getProfile = async () => {
+          const res = await axios.get(API_URL + "/profile", {
+              headers: {
+                  Authorization: "Bearer " + token
+              },
+          });
+    const action = {
+      type: "PROFILE",
+      payload: res.data
+    };
+    dispatch(action);
+    if (res.data) {
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+    }
+  }
+
 
   return (
     <UserContext.Provider
@@ -54,7 +70,8 @@ export const UserProvider = ({ children }) => {
         token: state.token,
         user: state.user,
         login,
-        logout
+        logout,
+        getProfile
       }}
     >
       {children}

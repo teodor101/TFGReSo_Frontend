@@ -1,18 +1,9 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import { useEffect, useContext } from 'react'
+import { UserContext } from '../../context/UserContext/UserState'
 
 const Profile = () => {
-    const token = localStorage.getItem("token");
-    const [user, setUser] = useState(null);
-
-    const getProfile = async () => {
-        const res = await axios.get("http://localhost:8000/api/profile", {
-            headers: {
-                Authorization: "Bearer " + token
-            }
-        })
-        setUser(res.data.user);
-    };
+    const {user, getProfile} = useContext(UserContext);
+    
     useEffect(() => {
       getProfile();
     }, [])

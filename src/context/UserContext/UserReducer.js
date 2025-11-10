@@ -12,6 +12,11 @@ const users = (state, action) => {
         token: "",
         user: null,
       };
+    case "PROFILE":
+      return {
+        ...state,
+        user: action.payload.user,
+      };
     default:
       return state;
   }

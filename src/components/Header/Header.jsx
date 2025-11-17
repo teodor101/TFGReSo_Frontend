@@ -16,8 +16,9 @@ const Header = () => {
         <Link to="/">Home</Link>
         {token ? 
         <>
-        <button onClick={logOut}>LogOut</button>
         <Link to="/profile">Profile</Link>
+        <Link to="/misposts">Mis Posts</Link>
+        <button onClick={logOut}>LogOut</button>
         </>
         :
         <>

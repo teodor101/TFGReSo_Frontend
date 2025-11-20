@@ -9,14 +9,28 @@ const Profile = () => {
     }, [])
     if(!user){
 
-        return "Cargando..."
+        return (
+            <section className="page-card">
+                <p className="empty-state">Cargando tu perfil...</p>
+            </section>
+        )
 
     }
     return (
-        <div>Profile
-            <p>{user.name}</p>
-            <p>{user.email}</p>
-        </div>
+        <section className="page-card">
+            <h2>Tu perfil</h2>
+            <p>Estos son los datos asociados a tu cuenta.</p>
+            <div className="profile-info">
+                <div>
+                    <span className="label">Nombre</span>
+                    <strong>{user.name}</strong>
+                </div>
+                <div>
+                    <span className="label">Email</span>
+                    <strong>{user.email}</strong>
+                </div>
+            </div>
+        </section>
     )
 }
 

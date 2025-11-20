@@ -52,29 +52,39 @@ const MisPosts = () => {
         }, []);
 
   return (
-    <div>
-        <h2>MisPosts</h2>
+    <section className="page-card">
+        <h2>Mis publicaciones</h2>
+        <p>Comparte lo que estás pensando y revisa tus posts más recientes.</p>
         
-        <form onSubmit={handleSubmit}>
-            <textarea
-                placeholder="Escribe tu post..."
-                value={formData.content}
-                onChange={handleInputChange}
-                name="content"
-                rows="4"
-                style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-            />
-            <button type="submit" style={{ padding: "8px 16px" }}>Crear Post</button>
+        <form className="form" onSubmit={handleSubmit}>
+            <div className="form-group">
+                <label className="form-label" htmlFor="content">Nuevo post</label>
+                <textarea
+                    id="content"
+                    className="form-input form-textarea"
+                    placeholder="Escribe tu post..."
+                    value={formData.content}
+                    onChange={handleInputChange}
+                    name="content"
+                    rows="4"
+                />
+            </div>
+            <button className="btn btn-primary" type="submit">Publicar</button>
         </form>
 
-        <div style={{ marginTop: "20px" }}>
-            {posts.map((post, index) => {
-                return <div key={index} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #ccc" }}>
-                    <p>{post.content}</p>
-                </div>
-            })}
+        <div className="posts-list">
+            {posts.length === 0 ? (
+                <p className="empty-state">Todavía no has publicado nada.</p>
+            ) : (
+                posts.map((post, index) => (
+                    <article key={index} className="post-item">
+                        <p>{post.content}</p>
+                        <span className="label">#{index + 1}</span>
+                    </article>
+                ))
+            )}
         </div>
-    </div>
+    </section>
   )
 }
 

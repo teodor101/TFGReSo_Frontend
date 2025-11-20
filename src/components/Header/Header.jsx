@@ -12,21 +12,28 @@ const Header = () => {
         navigate("/login");
     };
   return (
-    <div>
-        <Link to="/">Home</Link>
-        {token ? 
-        <>
-        <Link to="/profile">Profile</Link>
-        <Link to="/misposts">Mis Posts</Link>
-        <button onClick={logOut}>LogOut</button>
-        </>
-        :
-        <>
-        <Link to="/login">Login</Link>
-        <Link to="/register">Register</Link>
-        </>}
-        
-    </div>
+    <header className="main-header">
+      <div className="header-content">
+        <span className="brand">ReSo</span>
+        <nav className="nav-links">
+          <Link to="/">Inicio</Link>
+          {token ? (
+            <>
+              <Link to="/profile">Perfil</Link>
+              <Link to="/misposts">Mis Posts</Link>
+              <button className="btn btn-secondary" onClick={logOut}>
+                Cerrar sesión
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login">Iniciar sesión</Link>
+              <Link to="/register">Crear cuenta</Link>
+            </>
+          )}
+        </nav>
+      </div>
+    </header>
   )
 }
 

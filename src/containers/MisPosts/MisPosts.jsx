@@ -10,6 +10,9 @@ const MisPosts = () => {
     const [formData, setFormData] = useState({
         content: ""
     });
+    const [editingPostId, setEditingPostId] = useState(null);
+    const [editingContent, setEditingContent] = useState("");
+    const [feedback, setFeedback] = useState({ type: "", message: "" });
 
 
     const getUserPost = async ()=> {
@@ -19,7 +22,6 @@ const MisPosts = () => {
               },
           });
           setPosts(res.data.user);
-          console.log(res.data.user);
     }
 
     const handleInputChange = (e) => {
@@ -41,21 +43,82 @@ const MisPosts = () => {
             });
             // Limpiar el formulario y refrescar los posts
             setFormData({ content: "" });
+            setFeedback({ type: "success", message: "Post creado correctamente." });
             getUserPost();
         } catch (error) {
             console.error("Error al crear el post:", error);
+            setFeedback({ type: "error", message: "No se pudo crear el post." });
         }
     }
 
+    const startEdit = (post) => {
+        setEditingPostId(post.id);
+        setEditingContent(post.content);
+        setFeedback({ type: "", message: "" });
+    };
+
+    const cancelEdit = () => {
+        setEditingPostId(null);
+        setEditingContent("");
+    };
+
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        if (!editingPostId) return;
+
+        try {
+            await axios.put(`http://localhost:8000/api/posts/${editingPostId}`, {
+                content: editingContent
+            }, {
+                headers: {
+                    Authorization: "Bearer " + token
+                }
+            });
+            setFeedback({ type: "success", message: "Post actualizado correctamente." });
+            cancelEdit();
+            getUserPost();
+        } catch (error) {
+            console.error("Error al actualizar el post:", error);
+            setFeedback({ type: "error", message: "No se pudo actualizar el post." });
+        }
+    };
+
+    const handleDelete = async (postId) => {
+        if (!window.confirm("¿Estás seguro de que quieres eliminar este post? Esta acción no se puede deshacer.")) {
+            return;
+        }
+
+        try {
+            await axios.delete(`http://localhost:8000/api/deletePosts/${postId}`, {
+                headers: {
+                    Authorization: "Bearer " + token
+                }
+            });
+            setFeedback({ type: "success", message: "Post eliminado correctamente." });
+            getUserPost();
+        } catch (error) {
+            console.error("Error al eliminar el post:", error);
+            setFeedback({ type: "error", message: "No se pudo eliminar el post." });
+        }
+    };
+
     useEffect(() => {
-          getUserPost();
-        }, []);
+          if (token) {
+            getUserPost();
+          }
+        }, [token]);
 
   return (
     <section className="page-card">
         <h2>Mis publicaciones</h2>
         <p>Comparte lo que estás pensando y revisa tus posts más recientes.</p>
         
+        {feedback.message && (
+            <div className={`alert ${feedback.type === "error" ? "alert-error" : "alert-success"}`}>
+                {feedback.message}
+            </div>
+        )}
+
         <form className="form" onSubmit={handleSubmit}>
             <div className="form-group">
                 <label className="form-label" htmlFor="content">Nuevo post</label>
@@ -77,9 +140,48 @@ const MisPosts = () => {
                 <p className="empty-state">Todavía no has publicado nada.</p>
             ) : (
                 posts.map((post, index) => (
-                    <article key={index} className="post-item">
-                        <p>{post.content}</p>
-                        <span className="label">#{index + 1}</span>
+                    <article key={post.id ?? index} className="post-item">
+                        {editingPostId === post.id ? (
+                            <form className="form" onSubmit={handleUpdate}>
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor={`edit-${post.id}`}>Editar contenido</label>
+                                    <textarea
+                                        id={`edit-${post.id}`}
+                                        className="form-input form-textarea"
+                                        value={editingContent}
+                                        onChange={(e) => setEditingContent(e.target.value)}
+                                        rows="3"
+                                    />
+                                </div>
+                                <div className="cta-group">
+                                    <button className="btn btn-primary" type="submit">Guardar cambios</button>
+                                    <button type="button" className="btn btn-secondary" onClick={cancelEdit}>Cancelar</button>
+                                </div>
+                            </form>
+                        ) : (
+                            <>
+                                <p>{post.content}</p>
+                                <div className="post-meta">
+                                    <span className="label">#{index + 1}</span>
+                                    <div className="cta-group">
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary"
+                                            onClick={() => startEdit(post)}
+                                        >
+                                            Editar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-danger"
+                                            onClick={() => handleDelete(post.id)}
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </article>
                 ))
             )}

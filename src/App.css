@@ -153,6 +153,17 @@
   color: var(--color-primary-strong);
 }
 
+.btn-danger {
+  background-color: #fee4e2;
+  color: #b42318;
+  border: 1px solid #fda29b;
+}
+
+.btn-danger:hover {
+  background-color: #fecaca;
+  box-shadow: 0 4px 12px rgba(180, 35, 24, 0.2);
+}
+
 .btn:hover {
   transform: translateY(-1px);
 }
@@ -245,6 +256,15 @@
   border-radius: 12px;
   padding: 1rem;
   background: #fcfcff;
+}
+
+.post-meta {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .empty-state {

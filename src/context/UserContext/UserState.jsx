@@ -48,21 +48,77 @@ export const UserProvider = ({ children }) => {
   }
 
   const getProfile = async () => {
-          const res = await axios.get(API_URL + "/profile", {
-              headers: {
-                  Authorization: "Bearer " + token
-              },
-          });
-    const action = {
-      type: "PROFILE",
-      payload: res.data
-    };
-    dispatch(action);
-    if (res.data) {
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+    const currentToken = state.token || localStorage.getItem("token");
+    
+    if (!currentToken) {
+      // Si no hay token, limpiar el estado
+      const action = {
+        type: "LOGOUT",
+        payload: null,
+      };
+      dispatch(action);
+      return;
+    }
+
+    try {
+      const res = await axios.get(API_URL + "/profile", {
+        headers: {
+          Authorization: "Bearer " + currentToken
+        },
+      });
+      const action = {
+        type: "PROFILE",
+        payload: res.data
+      };
+      dispatch(action);
+      if (res.data) {
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+      }
+    } catch (error) {
+      // Si el error es 401 (no autorizado), limpiar el estado y desloguear
+      if (error.response?.status === 401) {
+        localStorage.clear();
+        const action = {
+          type: "LOGOUT",
+          payload: null,
+        };
+        dispatch(action);
+      }
+      throw error;
     }
   }
 
+  const deleteAccount = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await axios.delete(API_URL + "/profile", {
+        headers: {
+          Authorization: "Bearer " + token
+        }
+      });
+      
+      // Limpiar localStorage primero
+      localStorage.clear();
+      
+      // Despachar acción LOGOUT para actualizar el estado
+      const action = {
+        type: "LOGOUT",
+        payload: res.data,
+      };
+      dispatch(action);
+      
+      return res.data;
+    } catch (error) {
+      // Aunque haya error, limpiar el estado local si la cuenta fue eliminada
+      localStorage.clear();
+      const action = {
+        type: "LOGOUT",
+        payload: null,
+      };
+      dispatch(action);
+      throw error;
+    }
+  }
 
   return (
     <UserContext.Provider
@@ -71,7 +127,8 @@ export const UserProvider = ({ children }) => {
         user: state.user,
         login,
         logout,
-        getProfile
+        getProfile,
+        deleteAccount
       }}
     >
       {children}

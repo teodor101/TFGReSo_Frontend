@@ -17,9 +17,9 @@
 }
 
 [data-theme="dark"] .main-header {
-  background-color: rgba(30, 41, 59, 0.8);
-  border-bottom: 1px solid rgba(51, 65, 85, 0.8);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.8);
+  border-bottom: 1px solid rgba(26, 26, 26, 0.8);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
 }
 
 .header-content {
@@ -81,8 +81,8 @@
 }
 
 [data-theme="dark"] .theme-toggle:hover {
-  background-color: var(--color-secondary);
-  color: #a5b4fc;
+  background-color: #1a1a1a;
+  color: #ffffff;
 }
 
 .app-main {
@@ -158,7 +158,7 @@
 }
 
 [data-theme="dark"] .form-input {
-  background-color: #1e293b;
+  background-color: #0a0a0a;
   color: var(--color-text);
 }
 
@@ -182,7 +182,7 @@
 }
 
 [data-theme="dark"] .form-textarea {
-  background-color: #1e293b;
+  background-color: #0a0a0a;
   color: var(--color-text);
 }
 
@@ -215,12 +215,12 @@
 }
 
 [data-theme="dark"] .btn-secondary {
-  background-color: #1e1b4b;
-  color: #a5b4fc;
+  background-color: #ffffff;
+  color: #000000;
 }
 
 [data-theme="dark"] .btn-secondary:hover {
-  background-color: #312e81;
+  background-color: #f0f0f0;
 }
 
 .btn-danger {
@@ -356,7 +356,7 @@
 }
 
 [data-theme="dark"] .post-item {
-  background: #1e293b;
+  background: #0a0a0a;
 }
 
 .post-meta {

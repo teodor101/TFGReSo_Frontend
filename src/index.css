@@ -26,13 +26,13 @@
 [data-theme="dark"] {
   --color-text: #f1f5f9;
   --color-muted: #94a3b8;
-  --color-card: #1e293b;
-  --color-border: #334155;
-  --color-secondary: #1e1b4b;
-  --color-bg: #0f172a;
-  --color-bg-gradient-start: #0f172a;
-  --color-bg-gradient-end: #1e293b;
-  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.3);
+  --color-card: #0a0a0a;
+  --color-border: #1a1a1a;
+  --color-secondary: #1a1a1a;
+  --color-bg: #000000;
+  --color-bg-gradient-start: #000000;
+  --color-bg-gradient-end: #0a0a0a;
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 *,
@@ -65,11 +65,11 @@ a:hover {
 }
 
 [data-theme="dark"] a {
-  color: #a5b4fc;
+  color: #ffffff;
 }
 
 [data-theme="dark"] a:hover {
-  color: #c7d2fe;
+  color: #e0e0e0;
 }
 
 button,

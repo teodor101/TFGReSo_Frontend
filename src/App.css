@@ -214,13 +214,21 @@
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+.btn-secondary:hover {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-strong));
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(108, 92, 231, 0.3);
+}
+
 [data-theme="dark"] .btn-secondary {
   background-color: #ffffff;
   color: #000000;
 }
 
 [data-theme="dark"] .btn-secondary:hover {
-  background-color: #f0f0f0;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-strong));
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(108, 92, 231, 0.3);
 }
 
 .btn-danger {

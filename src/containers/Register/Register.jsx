@@ -69,7 +69,7 @@ const Register = () => {
         }
 
         try {
-            await axios.post("http://localhost:8000/api/register", formData);
+            await axios.post("https://tfgreso-backend.onrender.com/api/register", formData);
             clearState();
             setErrors([]);
             setInfoMessage("Registro completado correctamente. Ya puedes iniciar sesión.");

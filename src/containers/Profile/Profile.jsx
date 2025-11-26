@@ -54,7 +54,7 @@ const Profile = () => {
         try {
             setIsSubmitting(true);
             setFeedback({ type: "", message: "" });
-            await axios.put("http://localhost:8000/api/profile", formData, {
+            await axios.put("https://tfgreso-backend.onrender.com/api/profile", formData, {
                 headers: {
                     Authorization: "Bearer " + token
                 }

@@ -10,7 +10,7 @@ const initialState = {
   user: user,
 };
 
-const API_URL = "http://localhost:8000/api";
+const API_URL = "https://tfgreso-backend.onrender.com/api";
 
 export const UserContext = createContext(initialState);
 

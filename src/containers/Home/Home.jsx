@@ -12,7 +12,7 @@ const Home = () => {
 
   const getAllPosts = async () => {
     try {
-      const res = await axios.get("http://localhost:8000/api/posts");
+      const res = await axios.get("https://tfgreso-backend.onrender.com/api/posts");
       setPosts(res.data.posts);
     } catch (error) {
       console.error("Error al obtener los posts:", error);
@@ -36,7 +36,7 @@ const Home = () => {
     if (!editingPostId || !token) return;
 
     try {
-      await axios.put(`http://localhost:8000/api/posts/${editingPostId}`, {
+      await axios.put(`https://tfgreso-backend.onrender.com/api/posts/${editingPostId}`, {
         content: editingContent
       }, {
         headers: {
@@ -60,7 +60,7 @@ const Home = () => {
     if (!token) return;
 
     try {
-      await axios.delete(`http://localhost:8000/api/deletePosts/${postId}`, {
+      await axios.delete(`https://tfgreso-backend.onrender.com/api/deletePosts/${postId}`, {
         headers: {
           Authorization: "Bearer " + token
         }

@@ -16,7 +16,7 @@ const MisPosts = () => {
 
 
     const getUserPost = async ()=> {
-        const res = await axios.get("http://localhost:8000/api/getPosts", {
+        const res = await axios.get("https://tfgreso-backend.onrender.com/api/getPosts", {
               headers: {
                   Authorization: "Bearer " + token
               },
@@ -34,7 +34,7 @@ const MisPosts = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post("http://localhost:8000/api/createpost", {
+            await axios.post("https://tfgreso-backend.onrender.com/api/createpost", {
                 content: formData.content
             }, {
                 headers: {
@@ -67,7 +67,7 @@ const MisPosts = () => {
         if (!editingPostId) return;
 
         try {
-            await axios.put(`http://localhost:8000/api/posts/${editingPostId}`, {
+            await axios.put(`https://tfgreso-backend.onrender.com/api/posts/${editingPostId}`, {
                 content: editingContent
             }, {
                 headers: {
@@ -89,7 +89,7 @@ const MisPosts = () => {
         }
 
         try {
-            await axios.delete(`http://localhost:8000/api/deletePosts/${postId}`, {
+            await axios.delete(`https://tfgreso-backend.onrender.com/api/deletePosts/${postId}`, {
                 headers: {
                     Authorization: "Bearer " + token
                 }

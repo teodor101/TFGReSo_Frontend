@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import axios from 'axios'
 import { UserContext } from '../../context/UserContext/UserState';
 
+const API_URL = "https://tfgreso-backend.onrender.com/api";
+
 const Home = () => {
   const { token, user } = useContext(UserContext);
   const [posts, setPosts] = useState([]);
@@ -12,11 +14,52 @@ const Home = () => {
 
   const getAllPosts = async () => {
     try {
-      const res = await axios.get("https://tfgreso-backend.onrender.com/api/posts");
+      const res = token
+        ? await axios.get(`${API_URL}/posts/feed`, {
+            headers: { Authorization: "Bearer " + token }
+          })
+        : await axios.get(`${API_URL}/posts`);
       setPosts(res.data.posts);
     } catch (error) {
       console.error("Error al obtener los posts:", error);
       setFeedback({ type: "error", message: "No se pudieron cargar los posts." });
+    }
+  };
+
+  const toggleLike = async (postId) => {
+    if (!token) {
+      setFeedback({ type: "error", message: "Inicia sesión para dar like." });
+      return;
+    }
+
+    const prevPosts = posts;
+    setPosts((current) =>
+      current.map((p) => {
+        if (p.id !== postId) return p;
+        const wasLiked = !!p.liked;
+        const nextLiked = !wasLiked;
+        const currentCount = Number.isFinite(p.likes_count) ? p.likes_count : 0;
+        const nextCount = Math.max(0, currentCount + (nextLiked ? 1 : -1));
+        return { ...p, liked: nextLiked, likes_count: nextCount };
+      })
+    );
+
+    try {
+      const res = await axios.post(`${API_URL}/posts/${postId}/like`, null, {
+        headers: { Authorization: "Bearer " + token }
+      });
+
+      setPosts((current) =>
+        current.map((p) =>
+          p.id === postId
+            ? { ...p, liked: res.data.liked, likes_count: res.data.likes_count }
+            : p
+        )
+      );
+    } catch (error) {
+      console.error("Error al dar/quitar like:", error);
+      setPosts(prevPosts);
+      setFeedback({ type: "error", message: "No se pudo actualizar el like." });
     }
   };
 
@@ -81,7 +124,7 @@ const Home = () => {
 
   useEffect(() => {
     getAllPosts();
-  }, []);
+  }, [token]);
 
   return (
     <section className="page-card">
@@ -135,24 +178,39 @@ const Home = () => {
                     <div>
                       <span className="label">Por: {post.user?.name || 'Usuario desconocido'}</span>
                     </div>
-                    {isOwner(post) && (
-                      <div className="cta-group">
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={() => startEdit(post)}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-danger"
-                          onClick={() => handleDelete(post.id)}
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    )}
+                    <div className="post-actions">
+                      <button
+                        type="button"
+                        className={`like-button ${post.liked ? "is-liked" : ""}`}
+                        onClick={() => toggleLike(post.id)}
+                        disabled={!token}
+                        aria-pressed={!!post.liked}
+                        aria-label={post.liked ? "Quitar like" : "Dar like"}
+                        title={!token ? "Inicia sesión para dar like" : (post.liked ? "Quitar like" : "Dar like")}
+                      >
+                        <span className="like-icon">{post.liked ? "❤" : "♡"}</span>
+                        <span className="like-count">{post.likes_count ?? 0}</span>
+                      </button>
+
+                      {isOwner(post) && (
+                        <div className="cta-group" style={{ marginTop: 0 }}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => startEdit(post)}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-danger"
+                            onClick={() => handleDelete(post.id)}
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </>
               )}

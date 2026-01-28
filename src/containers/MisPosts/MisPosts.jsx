@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from 'react'
 import axios from 'axios'
 import { UserContext } from '../../context/UserContext/UserState';
 
+const API_URL = "https://tfgreso-backend.onrender.com/api";
 
 const MisPosts = () => {
 
@@ -16,13 +17,47 @@ const MisPosts = () => {
 
 
     const getUserPost = async ()=> {
-        const res = await axios.get("https://tfgreso-backend.onrender.com/api/getPosts", {
+        const res = await axios.get(`${API_URL}/getPosts`, {
               headers: {
                   Authorization: "Bearer " + token
               },
           });
           setPosts(res.data.user);
     }
+
+    const toggleLike = async (postId) => {
+        if (!token) return;
+
+        const prevPosts = posts;
+        setPosts((current) =>
+          current.map((p) => {
+            if (p.id !== postId) return p;
+            const wasLiked = !!p.liked;
+            const nextLiked = !wasLiked;
+            const currentCount = Number.isFinite(p.likes_count) ? p.likes_count : 0;
+            const nextCount = Math.max(0, currentCount + (nextLiked ? 1 : -1));
+            return { ...p, liked: nextLiked, likes_count: nextCount };
+          })
+        );
+
+        try {
+            const res = await axios.post(`${API_URL}/posts/${postId}/like`, null, {
+                headers: { Authorization: "Bearer " + token }
+            });
+
+            setPosts((current) =>
+              current.map((p) =>
+                p.id === postId
+                  ? { ...p, liked: res.data.liked, likes_count: res.data.likes_count }
+                  : p
+              )
+            );
+        } catch (error) {
+            console.error("Error al dar/quitar like:", error);
+            setPosts(prevPosts);
+            setFeedback({ type: "error", message: "No se pudo actualizar el like." });
+        }
+    };
 
     const handleInputChange = (e) => {
         setFormData({
@@ -34,7 +69,7 @@ const MisPosts = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post("https://tfgreso-backend.onrender.com/api/createpost", {
+            await axios.post(`${API_URL}/createpost`, {
                 content: formData.content
             }, {
                 headers: {
@@ -67,7 +102,7 @@ const MisPosts = () => {
         if (!editingPostId) return;
 
         try {
-            await axios.put(`https://tfgreso-backend.onrender.com/api/posts/${editingPostId}`, {
+            await axios.put(`${API_URL}/posts/${editingPostId}`, {
                 content: editingContent
             }, {
                 headers: {
@@ -89,7 +124,7 @@ const MisPosts = () => {
         }
 
         try {
-            await axios.delete(`https://tfgreso-backend.onrender.com/api/deletePosts/${postId}`, {
+            await axios.delete(`${API_URL}/deletePosts/${postId}`, {
                 headers: {
                     Authorization: "Bearer " + token
                 }
@@ -163,7 +198,21 @@ const MisPosts = () => {
                                 <p>{post.content}</p>
                                 <div className="post-meta">
                                     <span className="label">#{index + 1}</span>
-                                    <div className="cta-group">
+                                    <div className="post-actions">
+                                        <button
+                                            type="button"
+                                            className={`like-button ${post.liked ? "is-liked" : ""}`}
+                                            onClick={() => toggleLike(post.id)}
+                                            disabled={!token}
+                                            aria-pressed={!!post.liked}
+                                            aria-label={post.liked ? "Quitar like" : "Dar like"}
+                                            title={post.liked ? "Quitar like" : "Dar like"}
+                                        >
+                                            <span className="like-icon">{post.liked ? "❤" : "♡"}</span>
+                                            <span className="like-count">{post.likes_count ?? 0}</span>
+                                        </button>
+
+                                        <div className="cta-group" style={{ marginTop: 0 }}>
                                         <button
                                             type="button"
                                             className="btn btn-secondary"
@@ -178,6 +227,7 @@ const MisPosts = () => {
                                         >
                                             Eliminar
                                         </button>
+                                        </div>
                                     </div>
                                 </div>
                             </>

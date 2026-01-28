@@ -376,6 +376,53 @@
   flex-wrap: wrap;
 }
 
+.post-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.like-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  padding: 0.45rem 0.65rem;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--color-muted);
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.like-button:hover:not(:disabled) {
+  background: var(--color-secondary);
+  color: var(--color-primary-strong);
+  transform: translateY(-1px);
+}
+
+.like-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.like-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.like-button.is-liked .like-icon {
+  color: #e11d48;
+}
+
+.like-count {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: inherit;
+}
+
 .empty-state {
   text-align: center;
   color: var(--color-muted);

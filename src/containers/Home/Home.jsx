@@ -118,6 +118,13 @@ const Home = () => {
       });
 
       setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
+      setPosts((current) =>
+        current.map((p) =>
+          p.id === postId
+            ? { ...p, comments_count: (Number.isFinite(p.comments_count) ? p.comments_count : 0) + 1 }
+            : p
+        )
+      );
       setCommentsByPost((prev) => {
         const currentItems = prev[postId]?.items || [];
         return {
@@ -128,6 +135,50 @@ const Home = () => {
     } catch (error) {
       console.error("Error al crear comentario:", error);
       setFeedback({ type: "error", message: "No se pudo crear el comentario." });
+    }
+  };
+
+  const deleteComment = async (postId, commentId) => {
+    if (!token) return;
+    if (!window.confirm("¿Eliminar este comentario?")) return;
+
+    const prevItems = commentsByPost[postId]?.items || [];
+
+    setCommentsByPost((state) => ({
+      ...state,
+      [postId]: {
+        ...state[postId],
+        items: (state[postId]?.items || []).filter((c) => c.id !== commentId)
+      }
+    }));
+
+    setPosts((current) =>
+      current.map((p) =>
+        p.id === postId
+          ? { ...p, comments_count: Math.max(0, (Number.isFinite(p.comments_count) ? p.comments_count : 0) - 1) }
+          : p
+      )
+    );
+
+    try {
+      await axios.delete(`${API_URL}/comments/${commentId}`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+    } catch (error) {
+      console.error("Error al eliminar comentario:", error);
+      setCommentsByPost((state) => ({
+        ...state,
+        [postId]: { ...state[postId], items: prevItems }
+      }));
+      // restaurar contador
+      setPosts((current) =>
+        current.map((p) =>
+          p.id === postId
+            ? { ...p, comments_count: (Number.isFinite(p.comments_count) ? p.comments_count : 0) + 1 }
+            : p
+        )
+      );
+      setFeedback({ type: "error", message: "No se pudo eliminar el comentario." });
     }
   };
 
@@ -315,6 +366,11 @@ const Home = () => {
                         <span className="like-count">{post.likes_count ?? 0}</span>
                       </button>
 
+                      <span className="comment-count" title="Comentarios">
+                        <span className="comment-count-icon">💬</span>
+                        <span className="comment-count-number">{post.comments_count ?? 0}</span>
+                      </span>
+
                       {isOwner(post) && (
                         <div className="cta-group" style={{ marginTop: 0 }}>
                           <button
@@ -368,13 +424,6 @@ const Home = () => {
                           >
                             Comentar
                           </button>
-                          <button
-                            type="button"
-                            className="btn btn-secondary"
-                            onClick={() => loadComments(post.id)}
-                          >
-                            Recargar
-                          </button>
                         </div>
                       </div>
 
@@ -394,18 +443,31 @@ const Home = () => {
                                   <span className="comment-author">
                                     {c.user?.name ? `Por: ${c.user.name}` : "Usuario"}
                                   </span>
-                                  <button
-                                    type="button"
-                                    className={`like-button ${c.liked ? "is-liked" : ""}`}
-                                    onClick={() => toggleCommentLike(post.id, c.id)}
-                                    disabled={!token}
-                                    aria-pressed={!!c.liked}
-                                    aria-label={c.liked ? "Quitar like del comentario" : "Dar like al comentario"}
-                                    title={!token ? "Inicia sesión para dar like" : (c.liked ? "Quitar like" : "Dar like")}
-                                  >
-                                    <span className="like-icon">{c.liked ? "❤" : "♡"}</span>
-                                    <span className="like-count">{c.likes_count ?? 0}</span>
-                                  </button>
+                                  <div className="post-actions">
+                                    <button
+                                      type="button"
+                                      className={`like-button ${c.liked ? "is-liked" : ""}`}
+                                      onClick={() => toggleCommentLike(post.id, c.id)}
+                                      disabled={!token}
+                                      aria-pressed={!!c.liked}
+                                      aria-label={c.liked ? "Quitar like del comentario" : "Dar like al comentario"}
+                                      title={!token ? "Inicia sesión para dar like" : (c.liked ? "Quitar like" : "Dar like")}
+                                    >
+                                      <span className="like-icon">{c.liked ? "❤" : "♡"}</span>
+                                      <span className="like-count">{c.likes_count ?? 0}</span>
+                                    </button>
+
+                                    {token && user && (c.user_id === user.id || c.user?.id === user.id) && (
+                                      <button
+                                        type="button"
+                                        className="btn btn-danger"
+                                        onClick={() => deleteComment(post.id, c.id)}
+                                        style={{ padding: "0.55rem 0.85rem" }}
+                                      >
+                                        Eliminar
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             ))

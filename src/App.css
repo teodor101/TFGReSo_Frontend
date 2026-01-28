@@ -384,6 +384,28 @@
   justify-content: flex-end;
 }
 
+.comment-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  padding: 0.45rem 0.65rem;
+  border-radius: 999px;
+  color: var(--color-muted);
+}
+
+.comment-count-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.comment-count-number {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: inherit;
+}
+
 .like-button {
   display: inline-flex;
   align-items: center;

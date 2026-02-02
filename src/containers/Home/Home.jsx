@@ -5,6 +5,52 @@ import { UserContext } from '../../context/UserContext/UserState';
 
 const API_URL = "https://tfgreso-backend.onrender.com/api";
 
+// Función para formatear fecha relativa
+const formatRelativeDate = (dateString) => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  // Menos de 1 minuto
+  if (diffSecs < 60) {
+    return 'Ahora mismo';
+  }
+
+  // Menos de 1 hora
+  if (diffMins < 60) {
+    return diffMins === 1 ? 'Hace 1 minuto' : `Hace ${diffMins} minutos`;
+  }
+
+  // Menos de 24 horas
+  if (diffHours < 24) {
+    return diffHours === 1 ? 'Hace 1 hora' : `Hace ${diffHours} horas`;
+  }
+
+  // Ayer
+  if (diffDays === 1) {
+    return 'Ayer';
+  }
+
+  // Hace 2 días o más - mostrar fecha completa
+  const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const day = date.getDate();
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  const currentYear = now.getFullYear();
+
+  if (year === currentYear) {
+    return `El ${day} de ${month}`;
+  }
+  return `El ${day} de ${month} de ${year}`;
+};
+
 const Home = () => {
   const { token, user } = useContext(UserContext);
   const [posts, setPosts] = useState([]);
@@ -19,10 +65,14 @@ const Home = () => {
     try {
       const res = token
         ? await axios.get(`${API_URL}/posts/feed`, {
-            headers: { Authorization: "Bearer " + token }
-          })
+          headers: { Authorization: "Bearer " + token }
+        })
         : await axios.get(`${API_URL}/posts`);
-      setPosts(res.data.posts);
+      // Ordenar por likes (más likes primero)
+      const sortedPosts = (res.data.posts || []).sort((a, b) =>
+        (b.likes_count || 0) - (a.likes_count || 0)
+      );
+      setPosts(sortedPosts);
     } catch (error) {
       console.error("Error al obtener los posts:", error);
       setFeedback({ type: "error", message: "No se pudieron cargar los posts." });
@@ -308,10 +358,10 @@ const Home = () => {
         entorno sencillo y seguro. Empieza creando una cuenta o continúa donde lo dejaste.
       </p>
       <div className="cta-group">
-        {token ? 
-        <Link to="/misposts" className="btn btn-primary">Crear un post</Link>
-        :
-        <Link to="/register" className="btn btn-secondary">Crear cuenta</Link>
+        {token ?
+          <Link to="/misposts" className="btn btn-primary">Crear un post</Link>
+          :
+          <Link to="/register" className="btn btn-secondary">Crear cuenta</Link>
         }
       </div>
 
@@ -360,6 +410,9 @@ const Home = () => {
                   <div className="post-meta">
                     <div>
                       <span className="label">Por: {post.user?.name || 'Usuario desconocido'}</span>
+                      {post.created_at && (
+                        <span className="post-date">{formatRelativeDate(post.created_at)}</span>
+                      )}
                     </div>
                     <div className="post-actions">
                       <button

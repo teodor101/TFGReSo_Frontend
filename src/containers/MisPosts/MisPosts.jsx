@@ -4,6 +4,33 @@ import { UserContext } from '../../context/UserContext/UserState';
 
 const API_URL = "https://tfgreso-backend.onrender.com/api";
 
+// Función para formatear fecha relativa
+const formatRelativeDate = (dateString) => {
+    if (!dateString) return '';
+
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffSecs < 60) return 'Ahora mismo';
+    if (diffMins < 60) return diffMins === 1 ? 'Hace 1 minuto' : `Hace ${diffMins} minutos`;
+    if (diffHours < 24) return diffHours === 1 ? 'Hace 1 hora' : `Hace ${diffHours} horas`;
+    if (diffDays === 1) return 'Ayer';
+
+    const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    const currentYear = now.getFullYear();
+
+    return year === currentYear ? `El ${day} de ${month}` : `El ${day} de ${month} de ${year}`;
+};
+
 const MisPosts = () => {
 
     const { token, user } = useContext(UserContext);
@@ -22,13 +49,17 @@ const MisPosts = () => {
     const [contentError, setContentError] = useState("");
 
 
-    const getUserPost = async ()=> {
+    const getUserPost = async () => {
         const res = await axios.get(`${API_URL}/getPosts`, {
-              headers: {
-                  Authorization: "Bearer " + token
-              },
-          });
-          setPosts(res.data.user);
+            headers: {
+                Authorization: "Bearer " + token
+            },
+        });
+        // Ordenar por likes (más likes primero)
+        const sortedPosts = (res.data.user || []).sort((a, b) =>
+            (b.likes_count || 0) - (a.likes_count || 0)
+        );
+        setPosts(sortedPosts);
     }
 
     const toggleLike = async (postId) => {
@@ -36,14 +67,14 @@ const MisPosts = () => {
 
         const prevPosts = posts;
         setPosts((current) =>
-          current.map((p) => {
-            if (p.id !== postId) return p;
-            const wasLiked = !!p.liked;
-            const nextLiked = !wasLiked;
-            const currentCount = Number.isFinite(p.likes_count) ? p.likes_count : 0;
-            const nextCount = Math.max(0, currentCount + (nextLiked ? 1 : -1));
-            return { ...p, liked: nextLiked, likes_count: nextCount };
-          })
+            current.map((p) => {
+                if (p.id !== postId) return p;
+                const wasLiked = !!p.liked;
+                const nextLiked = !wasLiked;
+                const currentCount = Number.isFinite(p.likes_count) ? p.likes_count : 0;
+                const nextCount = Math.max(0, currentCount + (nextLiked ? 1 : -1));
+                return { ...p, liked: nextLiked, likes_count: nextCount };
+            })
         );
 
         try {
@@ -52,11 +83,11 @@ const MisPosts = () => {
             });
 
             setPosts((current) =>
-              current.map((p) =>
-                p.id === postId
-                  ? { ...p, liked: res.data.liked, likes_count: res.data.likes_count }
-                  : p
-              )
+                current.map((p) =>
+                    p.id === postId
+                        ? { ...p, liked: res.data.liked, likes_count: res.data.likes_count }
+                        : p
+                )
             );
         } catch (error) {
             console.error("Error al dar/quitar like:", error);
@@ -118,11 +149,11 @@ const MisPosts = () => {
 
             setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
             setPosts((current) =>
-              current.map((p) =>
-                p.id === postId
-                  ? { ...p, comments_count: (Number.isFinite(p.comments_count) ? p.comments_count : 0) + 1 }
-                  : p
-              )
+                current.map((p) =>
+                    p.id === postId
+                        ? { ...p, comments_count: (Number.isFinite(p.comments_count) ? p.comments_count : 0) + 1 }
+                        : p
+                )
             );
             setCommentsByPost((prev) => {
                 const currentItems = prev[postId]?.items || [];
@@ -152,11 +183,11 @@ const MisPosts = () => {
         }));
 
         setPosts((current) =>
-          current.map((p) =>
-            p.id === postId
-              ? { ...p, comments_count: Math.max(0, (Number.isFinite(p.comments_count) ? p.comments_count : 0) - 1) }
-              : p
-          )
+            current.map((p) =>
+                p.id === postId
+                    ? { ...p, comments_count: Math.max(0, (Number.isFinite(p.comments_count) ? p.comments_count : 0) - 1) }
+                    : p
+            )
         );
 
         try {
@@ -170,11 +201,11 @@ const MisPosts = () => {
                 [postId]: { ...state[postId], items: prevItems }
             }));
             setPosts((current) =>
-              current.map((p) =>
-                p.id === postId
-                  ? { ...p, comments_count: (Number.isFinite(p.comments_count) ? p.comments_count : 0) + 1 }
-                  : p
-              )
+                current.map((p) =>
+                    p.id === postId
+                        ? { ...p, comments_count: (Number.isFinite(p.comments_count) ? p.comments_count : 0) + 1 }
+                        : p
+                )
             );
             setFeedback({ type: "error", message: "No se pudo eliminar el comentario." });
         }
@@ -241,14 +272,14 @@ const MisPosts = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         // Validación del contenido
         if (!formData.content.trim()) {
             setContentError("Debes escribir algo en tu post antes de publicar.");
             return;
         }
         setContentError("");
-        
+
         try {
             const data = new FormData();
             data.append("content", formData.content);
@@ -283,7 +314,7 @@ const MisPosts = () => {
     const handleDrop = (e) => {
         e.preventDefault();
         setIsDragging(false);
-        
+
         const files = e.dataTransfer.files;
         if (files && files.length > 0) {
             const file = files[0];
@@ -357,259 +388,264 @@ const MisPosts = () => {
     };
 
     useEffect(() => {
-          if (token) {
+        if (token) {
             getUserPost();
-          }
-        }, [token]);
+        }
+    }, [token]);
 
-  return (
-    <section className="page-card">
-        <h2>Mis publicaciones</h2>
-        <p>Comparte lo que estás pensando y revisa tus posts más recientes.</p>
-        
-        {feedback.message && (
-            <div className={`alert ${feedback.type === "error" ? "alert-error" : "alert-success"}`}>
-                {feedback.message}
-            </div>
-        )}
+    return (
+        <section className="page-card">
+            <h2>Mis publicaciones</h2>
+            <p>Comparte lo que estás pensando y revisa tus posts más recientes.</p>
 
-        <form className="form" onSubmit={handleSubmit}>
-            <div className="form-group">
-                <label className="form-label" htmlFor="content">Nuevo post</label>
-                <textarea
-                    id="content"
-                    className={`form-input form-textarea ${contentError ? 'input-error' : ''}`}
-                    placeholder="Escribe tu post..."
-                    value={formData.content}
-                    onChange={(e) => {
-                        handleInputChange(e);
-                        if (contentError) setContentError("");
-                    }}
-                    name="content"
-                    rows="4"
-                />
-                {contentError && (
-                    <span className="field-error">{contentError}</span>
-                )}
-            </div>
-            <div className="form-group">
-                <label className="form-label">Imagen (opcional)</label>
-                <div 
-                    className={`image-dropzone ${isDragging ? 'is-dragging' : ''} ${imageFile ? 'has-file' : ''}`}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                >
-                    {imageFile ? (
-                        <div className="dropzone-preview">
-                            <img 
-                                src={URL.createObjectURL(imageFile)} 
-                                alt="Vista previa" 
-                                className="preview-image"
-                            />
-                            <div className="preview-info">
-                                <span className="preview-name">{imageFile.name}</span>
-                                <button 
-                                    type="button" 
-                                    className="btn-remove-image" 
-                                    onClick={removeImage}
-                                    aria-label="Eliminar imagen"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="dropzone-content">
-                            <span className="dropzone-icon">📷</span>
-                            <span className="dropzone-text">
-                                Arrastra una imagen aquí o{' '}
-                                <label htmlFor="post-image" className="dropzone-link">
-                                    selecciona un archivo
-                                </label>
-                            </span>
-                            <span className="dropzone-hint">JPEG, PNG, GIF o WEBP (máx. 5MB)</span>
-                        </div>
-                    )}
-                    <input
-                        id="post-image"
-                        type="file"
-                        accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                        onChange={handleFileSelect}
-                        className="dropzone-input"
-                    />
+            {feedback.message && (
+                <div className={`alert ${feedback.type === "error" ? "alert-error" : "alert-success"}`}>
+                    {feedback.message}
                 </div>
-            </div>
-            <button className="btn btn-primary" type="submit">Publicar</button>
-        </form>
+            )}
 
-        <div className="posts-list">
-            {posts.length === 0 ? (
-                <p className="empty-state">Todavía no has publicado nada.</p>
-            ) : (
-                posts.map((post, index) => (
-                    <article key={post.id ?? index} className="post-item">
-                        {editingPostId === post.id ? (
-                            <form className="form" onSubmit={handleUpdate}>
-                                <div className="form-group">
-                                    <label className="form-label" htmlFor={`edit-${post.id}`}>Editar contenido</label>
-                                    <textarea
-                                        id={`edit-${post.id}`}
-                                        className="form-input form-textarea"
-                                        value={editingContent}
-                                        onChange={(e) => setEditingContent(e.target.value)}
-                                        rows="3"
-                                    />
-                                </div>
-                                <div className="cta-group">
-                                    <button className="btn btn-primary" type="submit">Guardar cambios</button>
-                                    <button type="button" className="btn btn-secondary" onClick={cancelEdit}>Cancelar</button>
-                                </div>
-                            </form>
-                        ) : (
-                            <>
-                                <p>{post.content}</p>
-                                {(post.image_url || post.image_path) && (
-                                    <div className="post-image-wrap">
-                                        <img
-                                            src={post.image_url || `${API_URL.replace(/\/api\/?$/, '')}/storage/${post.image_path}`}
-                                            alt=""
-                                            className="post-image"
-                                        />
-                                    </div>
-                                )}
-                                <div className="post-meta">
-                                    <span className="label">#{index + 1}</span>
-                                    <div className="post-actions">
-                                        <button
-                                            type="button"
-                                            className={`like-button ${post.liked ? "is-liked" : ""}`}
-                                            onClick={() => toggleLike(post.id)}
-                                            disabled={!token}
-                                            aria-pressed={!!post.liked}
-                                            aria-label={post.liked ? "Quitar like" : "Dar like"}
-                                            title={post.liked ? "Quitar like" : "Dar like"}
-                                        >
-                                            <span className="like-icon">{post.liked ? "❤" : "♡"}</span>
-                                            <span className="like-count">{post.likes_count ?? 0}</span>
-                                        </button>
-
-                                        <span className="comment-count" title="Comentarios">
-                                            <span className="comment-count-icon">💬</span>
-                                            <span className="comment-count-number">{post.comments_count ?? 0}</span>
-                                        </span>
-
-                                        <div className="cta-group" style={{ marginTop: 0 }}>
-                                        <button
-                                            type="button"
-                                            className="btn btn-secondary"
-                                            onClick={() => startEdit(post)}
-                                        >
-                                            Editar
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn-danger"
-                                            onClick={() => handleDelete(post.id)}
-                                        >
-                                            Eliminar
-                                        </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="cta-group" style={{ marginTop: "0.75rem" }}>
+            <form className="form" onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label className="form-label" htmlFor="content">Nuevo post</label>
+                    <textarea
+                        id="content"
+                        className={`form-input form-textarea ${contentError ? 'input-error' : ''}`}
+                        placeholder="Escribe tu post..."
+                        value={formData.content}
+                        onChange={(e) => {
+                            handleInputChange(e);
+                            if (contentError) setContentError("");
+                        }}
+                        name="content"
+                        rows="4"
+                    />
+                    {contentError && (
+                        <span className="field-error">{contentError}</span>
+                    )}
+                </div>
+                <div className="form-group">
+                    <label className="form-label">Imagen (opcional)</label>
+                    <div
+                        className={`image-dropzone ${isDragging ? 'is-dragging' : ''} ${imageFile ? 'has-file' : ''}`}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                    >
+                        {imageFile ? (
+                            <div className="dropzone-preview">
+                                <img
+                                    src={URL.createObjectURL(imageFile)}
+                                    alt="Vista previa"
+                                    className="preview-image"
+                                />
+                                <div className="preview-info">
+                                    <span className="preview-name">{imageFile.name}</span>
                                     <button
                                         type="button"
-                                        className="btn btn-secondary"
-                                        onClick={() => toggleComments(post.id)}
+                                        className="btn-remove-image"
+                                        onClick={removeImage}
+                                        aria-label="Eliminar imagen"
                                     >
-                                        {expandedPosts.has(post.id) ? "Ocultar comentarios" : "Ver comentarios"}
+                                        ✕
                                     </button>
                                 </div>
+                            </div>
+                        ) : (
+                            <div className="dropzone-content">
+                                <span className="dropzone-icon">📷</span>
+                                <span className="dropzone-text">
+                                    Arrastra una imagen aquí o{' '}
+                                    <label htmlFor="post-image" className="dropzone-link">
+                                        selecciona un archivo
+                                    </label>
+                                </span>
+                                <span className="dropzone-hint">JPEG, PNG, GIF o WEBP (máx. 5MB)</span>
+                            </div>
+                        )}
+                        <input
+                            id="post-image"
+                            type="file"
+                            accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                            onChange={handleFileSelect}
+                            className="dropzone-input"
+                        />
+                    </div>
+                </div>
+                <button className="btn btn-primary" type="submit">Publicar</button>
+            </form>
 
-                                {expandedPosts.has(post.id) && (
-                                    <div className="comments">
-                                        <div className="comment-form">
-                                            <label className="form-label" htmlFor={`comment-${post.id}`}>Añadir comentario</label>
-                                            <textarea
-                                                id={`comment-${post.id}`}
-                                                className="form-input form-textarea"
-                                                placeholder={token ? "Escribe un comentario..." : "Inicia sesión para comentar"}
-                                                value={commentInputs[post.id] || ""}
-                                                onChange={(e) => setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))}
-                                                disabled={!token}
-                                                rows="3"
+            <div className="posts-list">
+                {posts.length === 0 ? (
+                    <p className="empty-state">Todavía no has publicado nada.</p>
+                ) : (
+                    posts.map((post, index) => (
+                        <article key={post.id ?? index} className="post-item">
+                            {editingPostId === post.id ? (
+                                <form className="form" onSubmit={handleUpdate}>
+                                    <div className="form-group">
+                                        <label className="form-label" htmlFor={`edit-${post.id}`}>Editar contenido</label>
+                                        <textarea
+                                            id={`edit-${post.id}`}
+                                            className="form-input form-textarea"
+                                            value={editingContent}
+                                            onChange={(e) => setEditingContent(e.target.value)}
+                                            rows="3"
+                                        />
+                                    </div>
+                                    <div className="cta-group">
+                                        <button className="btn btn-primary" type="submit">Guardar cambios</button>
+                                        <button type="button" className="btn btn-secondary" onClick={cancelEdit}>Cancelar</button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <>
+                                    <p>{post.content}</p>
+                                    {(post.image_url || post.image_path) && (
+                                        <div className="post-image-wrap">
+                                            <img
+                                                src={post.image_url || `${API_URL.replace(/\/api\/?$/, '')}/storage/${post.image_path}`}
+                                                alt=""
+                                                className="post-image"
                                             />
-                                            <div className="comment-actions">
+                                        </div>
+                                    )}
+                                    <div className="post-meta">
+                                        <div>
+                                            <span className="label">#{index + 1}</span>
+                                            {post.created_at && (
+                                                <span className="post-date">{formatRelativeDate(post.created_at)}</span>
+                                            )}
+                                        </div>
+                                        <div className="post-actions">
+                                            <button
+                                                type="button"
+                                                className={`like-button ${post.liked ? "is-liked" : ""}`}
+                                                onClick={() => toggleLike(post.id)}
+                                                disabled={!token}
+                                                aria-pressed={!!post.liked}
+                                                aria-label={post.liked ? "Quitar like" : "Dar like"}
+                                                title={post.liked ? "Quitar like" : "Dar like"}
+                                            >
+                                                <span className="like-icon">{post.liked ? "❤" : "♡"}</span>
+                                                <span className="like-count">{post.likes_count ?? 0}</span>
+                                            </button>
+
+                                            <span className="comment-count" title="Comentarios">
+                                                <span className="comment-count-icon">💬</span>
+                                                <span className="comment-count-number">{post.comments_count ?? 0}</span>
+                                            </span>
+
+                                            <div className="cta-group" style={{ marginTop: 0 }}>
                                                 <button
                                                     type="button"
-                                                    className="btn btn-primary"
-                                                    onClick={() => submitComment(post.id)}
-                                                    disabled={!token}
+                                                    className="btn btn-secondary"
+                                                    onClick={() => startEdit(post)}
                                                 >
-                                                    Comentar
+                                                    Editar
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-danger"
+                                                    onClick={() => handleDelete(post.id)}
+                                                >
+                                                    Eliminar
                                                 </button>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        {commentsByPost[post.id]?.loading ? (
-                                            <p className="empty-state">Cargando comentarios...</p>
-                                        ) : commentsByPost[post.id]?.error ? (
-                                            <p className="empty-state">{commentsByPost[post.id]?.error}</p>
-                                        ) : (
-                                            <div className="comment-list">
-                                                {(commentsByPost[post.id]?.items || []).length === 0 ? (
-                                                    <p className="empty-state">Todavía no hay comentarios.</p>
-                                                ) : (
-                                                    (commentsByPost[post.id]?.items || []).map((c) => (
-                                                        <div key={c.id} className="comment-item">
-                                                            <div>{c.comment}</div>
-                                                            <div className="comment-meta">
-                                                                <span className="comment-author">
-                                                                    {c.user?.name ? `Por: ${c.user.name}` : "Usuario"}
-                                                                </span>
-                                                                <div className="post-actions">
-                                                                    <button
-                                                                        type="button"
-                                                                        className={`like-button ${c.liked ? "is-liked" : ""}`}
-                                                                        onClick={() => toggleCommentLike(post.id, c.id)}
-                                                                        disabled={!token}
-                                                                        aria-pressed={!!c.liked}
-                                                                        aria-label={c.liked ? "Quitar like del comentario" : "Dar like al comentario"}
-                                                                        title={!token ? "Inicia sesión para dar like" : (c.liked ? "Quitar like" : "Dar like")}
-                                                                    >
-                                                                        <span className="like-icon">{c.liked ? "❤" : "♡"}</span>
-                                                                        <span className="like-count">{c.likes_count ?? 0}</span>
-                                                                    </button>
+                                    <div className="cta-group" style={{ marginTop: "0.75rem" }}>
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary"
+                                            onClick={() => toggleComments(post.id)}
+                                        >
+                                            {expandedPosts.has(post.id) ? "Ocultar comentarios" : "Ver comentarios"}
+                                        </button>
+                                    </div>
 
-                                                                    {token && user && (c.user_id === user.id || c.user?.id === user.id) && (
+                                    {expandedPosts.has(post.id) && (
+                                        <div className="comments">
+                                            <div className="comment-form">
+                                                <label className="form-label" htmlFor={`comment-${post.id}`}>Añadir comentario</label>
+                                                <textarea
+                                                    id={`comment-${post.id}`}
+                                                    className="form-input form-textarea"
+                                                    placeholder={token ? "Escribe un comentario..." : "Inicia sesión para comentar"}
+                                                    value={commentInputs[post.id] || ""}
+                                                    onChange={(e) => setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))}
+                                                    disabled={!token}
+                                                    rows="3"
+                                                />
+                                                <div className="comment-actions">
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-primary"
+                                                        onClick={() => submitComment(post.id)}
+                                                        disabled={!token}
+                                                    >
+                                                        Comentar
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {commentsByPost[post.id]?.loading ? (
+                                                <p className="empty-state">Cargando comentarios...</p>
+                                            ) : commentsByPost[post.id]?.error ? (
+                                                <p className="empty-state">{commentsByPost[post.id]?.error}</p>
+                                            ) : (
+                                                <div className="comment-list">
+                                                    {(commentsByPost[post.id]?.items || []).length === 0 ? (
+                                                        <p className="empty-state">Todavía no hay comentarios.</p>
+                                                    ) : (
+                                                        (commentsByPost[post.id]?.items || []).map((c) => (
+                                                            <div key={c.id} className="comment-item">
+                                                                <div>{c.comment}</div>
+                                                                <div className="comment-meta">
+                                                                    <span className="comment-author">
+                                                                        {c.user?.name ? `Por: ${c.user.name}` : "Usuario"}
+                                                                    </span>
+                                                                    <div className="post-actions">
                                                                         <button
                                                                             type="button"
-                                                                            className="btn btn-danger"
-                                                                            onClick={() => deleteComment(post.id, c.id)}
-                                                                            style={{ padding: "0.55rem 0.85rem" }}
+                                                                            className={`like-button ${c.liked ? "is-liked" : ""}`}
+                                                                            onClick={() => toggleCommentLike(post.id, c.id)}
+                                                                            disabled={!token}
+                                                                            aria-pressed={!!c.liked}
+                                                                            aria-label={c.liked ? "Quitar like del comentario" : "Dar like al comentario"}
+                                                                            title={!token ? "Inicia sesión para dar like" : (c.liked ? "Quitar like" : "Dar like")}
                                                                         >
-                                                                            Eliminar
+                                                                            <span className="like-icon">{c.liked ? "❤" : "♡"}</span>
+                                                                            <span className="like-count">{c.likes_count ?? 0}</span>
                                                                         </button>
-                                                                    )}
+
+                                                                        {token && user && (c.user_id === user.id || c.user?.id === user.id) && (
+                                                                            <button
+                                                                                type="button"
+                                                                                className="btn btn-danger"
+                                                                                onClick={() => deleteComment(post.id, c.id)}
+                                                                                style={{ padding: "0.55rem 0.85rem" }}
+                                                                            >
+                                                                                Eliminar
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </article>
-                ))
-            )}
-        </div>
-    </section>
-  )
+                                                        ))
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </article>
+                    ))
+                )}
+            </div>
+        </section>
+    )
 }
 
 export default MisPosts

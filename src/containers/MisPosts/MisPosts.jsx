@@ -18,6 +18,8 @@ const MisPosts = () => {
     const [editingPostId, setEditingPostId] = useState(null);
     const [editingContent, setEditingContent] = useState("");
     const [feedback, setFeedback] = useState({ type: "", message: "" });
+    const [isDragging, setIsDragging] = useState(false);
+    const [contentError, setContentError] = useState("");
 
 
     const getUserPost = async ()=> {
@@ -239,6 +241,14 @@ const MisPosts = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Validación del contenido
+        if (!formData.content.trim()) {
+            setContentError("Debes escribir algo en tu post antes de publicar.");
+            return;
+        }
+        setContentError("");
+        
         try {
             const data = new FormData();
             data.append("content", formData.content);
@@ -259,6 +269,41 @@ const MisPosts = () => {
             setFeedback({ type: "error", message: error.response?.data?.message || "No se pudo crear el post." });
         }
     }
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            const file = files[0];
+            const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
+            if (validTypes.includes(file.type)) {
+                setImageFile(file);
+            } else {
+                setFeedback({ type: "error", message: "Formato de imagen no válido. Usa: JPEG, PNG, JPG, GIF o WEBP." });
+            }
+        }
+    };
+
+    const handleFileSelect = (e) => {
+        const file = e.target.files?.[0] || null;
+        setImageFile(file);
+    };
+
+    const removeImage = () => {
+        setImageFile(null);
+    };
 
     const startEdit = (post) => {
         setEditingPostId(post.id);
@@ -333,26 +378,67 @@ const MisPosts = () => {
                 <label className="form-label" htmlFor="content">Nuevo post</label>
                 <textarea
                     id="content"
-                    className="form-input form-textarea"
+                    className={`form-input form-textarea ${contentError ? 'input-error' : ''}`}
                     placeholder="Escribe tu post..."
                     value={formData.content}
-                    onChange={handleInputChange}
+                    onChange={(e) => {
+                        handleInputChange(e);
+                        if (contentError) setContentError("");
+                    }}
                     name="content"
                     rows="4"
                 />
+                {contentError && (
+                    <span className="field-error">{contentError}</span>
+                )}
             </div>
             <div className="form-group">
-                <label className="form-label" htmlFor="post-image">Imagen (opcional)</label>
-                <input
-                    id="post-image"
-                    type="file"
-                    accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                    className="form-input"
-                />
-                {imageFile && (
-                    <span className="helper-text">Seleccionada: {imageFile.name}</span>
-                )}
+                <label className="form-label">Imagen (opcional)</label>
+                <div 
+                    className={`image-dropzone ${isDragging ? 'is-dragging' : ''} ${imageFile ? 'has-file' : ''}`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                >
+                    {imageFile ? (
+                        <div className="dropzone-preview">
+                            <img 
+                                src={URL.createObjectURL(imageFile)} 
+                                alt="Vista previa" 
+                                className="preview-image"
+                            />
+                            <div className="preview-info">
+                                <span className="preview-name">{imageFile.name}</span>
+                                <button 
+                                    type="button" 
+                                    className="btn-remove-image" 
+                                    onClick={removeImage}
+                                    aria-label="Eliminar imagen"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="dropzone-content">
+                            <span className="dropzone-icon">📷</span>
+                            <span className="dropzone-text">
+                                Arrastra una imagen aquí o{' '}
+                                <label htmlFor="post-image" className="dropzone-link">
+                                    selecciona un archivo
+                                </label>
+                            </span>
+                            <span className="dropzone-hint">JPEG, PNG, GIF o WEBP (máx. 5MB)</span>
+                        </div>
+                    )}
+                    <input
+                        id="post-image"
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                        onChange={handleFileSelect}
+                        className="dropzone-input"
+                    />
+                </div>
             </div>
             <button className="btn btn-primary" type="submit">Publicar</button>
         </form>
@@ -383,9 +469,13 @@ const MisPosts = () => {
                         ) : (
                             <>
                                 <p>{post.content}</p>
-                                {post.image_url && (
+                                {(post.image_url || post.image_path) && (
                                     <div className="post-image-wrap">
-                                        <img src={post.image_url} alt="" className="post-image" />
+                                        <img
+                                            src={post.image_url || `${API_URL.replace(/\/api\/?$/, '')}/storage/${post.image_path}`}
+                                            alt=""
+                                            className="post-image"
+                                        />
                                     </div>
                                 )}
                                 <div className="post-meta">

@@ -347,10 +347,14 @@ const Home = () => {
                 </form>
               ) : (
                 <>
-                  <p>{post.content}</p>
-                  {post.image_url && (
+                  <p>{post.content}</p>{console.log(post)}
+                  {(post.image_url || post.image_path) && (
                     <div className="post-image-wrap">
-                      <img src={post.image_url} alt="" className="post-image" />
+                      <img
+                        src={post.image_url || `${API_URL.replace(/\/api\/?$/, '')}/storage/${post.image_path}`}
+                        alt=""
+                        className="post-image"
+                      />
                     </div>
                   )}
                   <div className="post-meta">

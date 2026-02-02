@@ -348,6 +348,11 @@ const Home = () => {
               ) : (
                 <>
                   <p>{post.content}</p>
+                  {post.image_url && (
+                    <div className="post-image-wrap">
+                      <img src={post.image_url} alt="" className="post-image" />
+                    </div>
+                  )}
                   <div className="post-meta">
                     <div>
                       <span className="label">Por: {post.user?.name || 'Usuario desconocido'}</span>

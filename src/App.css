@@ -363,6 +363,22 @@
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
+.post-image-wrap {
+  margin-top: 0.75rem;
+  border-radius: 12px;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.post-image {
+  display: block;
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  width: auto;
+  height: auto;
+}
+
 [data-theme="dark"] .post-item {
   background: #0a0a0a;
 }

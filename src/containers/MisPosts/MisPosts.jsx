@@ -14,6 +14,7 @@ const MisPosts = () => {
     const [formData, setFormData] = useState({
         content: ""
     });
+    const [imageFile, setImageFile] = useState(null);
     const [editingPostId, setEditingPostId] = useState(null);
     const [editingContent, setEditingContent] = useState("");
     const [feedback, setFeedback] = useState({ type: "", message: "" });
@@ -239,20 +240,23 @@ const MisPosts = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(`${API_URL}/createpost`, {
-                content: formData.content
-            }, {
+            const data = new FormData();
+            data.append("content", formData.content);
+            if (imageFile) {
+                data.append("image", imageFile);
+            }
+            await axios.post(`${API_URL}/createpost`, data, {
                 headers: {
                     Authorization: "Bearer " + token
                 }
             });
-            // Limpiar el formulario y refrescar los posts
             setFormData({ content: "" });
+            setImageFile(null);
             setFeedback({ type: "success", message: "Post creado correctamente." });
             getUserPost();
         } catch (error) {
             console.error("Error al crear el post:", error);
-            setFeedback({ type: "error", message: "No se pudo crear el post." });
+            setFeedback({ type: "error", message: error.response?.data?.message || "No se pudo crear el post." });
         }
     }
 
@@ -337,6 +341,19 @@ const MisPosts = () => {
                     rows="4"
                 />
             </div>
+            <div className="form-group">
+                <label className="form-label" htmlFor="post-image">Imagen (opcional)</label>
+                <input
+                    id="post-image"
+                    type="file"
+                    accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                    className="form-input"
+                />
+                {imageFile && (
+                    <span className="helper-text">Seleccionada: {imageFile.name}</span>
+                )}
+            </div>
             <button className="btn btn-primary" type="submit">Publicar</button>
         </form>
 
@@ -366,6 +383,11 @@ const MisPosts = () => {
                         ) : (
                             <>
                                 <p>{post.content}</p>
+                                {post.image_url && (
+                                    <div className="post-image-wrap">
+                                        <img src={post.image_url} alt="" className="post-image" />
+                                    </div>
+                                )}
                                 <div className="post-meta">
                                     <span className="label">#{index + 1}</span>
                                     <div className="post-actions">

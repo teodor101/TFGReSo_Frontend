@@ -8,18 +8,18 @@ const Header = () => {
   const { token, logout } = useContext(UserContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
-  
-  const logOut = async() => {
-        logout();
-        navigate("/login");
-    };
+
+  const logOut = async () => {
+    logout();
+    navigate("/login");
+  };
   return (
     <header className="main-header">
       <div className="header-content">
         <span className="brand">ReSo</span>
         <nav className="nav-links">
-          <button 
-            className="theme-toggle" 
+          <button
+            className="theme-toggle"
             onClick={toggleTheme}
             aria-label="Cambiar tema"
             title={theme === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'}
@@ -45,6 +45,7 @@ const Header = () => {
           <Link to="/">Inicio</Link>
           {token ? (
             <>
+              <Link to="/search">Buscar</Link>
               <Link to="/profile">Perfil</Link>
               <Link to="/misposts">Mis Posts</Link>
               <button className="btn btn-secondary" onClick={logOut}>

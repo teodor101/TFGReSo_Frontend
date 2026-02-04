@@ -8,6 +8,8 @@ import Profile from './containers/Profile/Profile'
 import { UserProvider } from './context/UserContext/UserState'
 import { ThemeProvider } from './context/ThemeContext/ThemeState'
 import MisPosts from './containers/MisPosts/MisPosts'
+import Search from './containers/Search/Search'
+import UserProfile from './containers/UserProfile/UserProfile'
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/misposts" element={<MisPosts />} />
+                    <Route path="/search" element={<Search />} />
+                    <Route path="/user/:id" element={<UserProfile />} />
                   </Routes>
                 </div>
               </main>

@@ -499,6 +499,23 @@ const MisPosts = () => {
                                 </form>
                             ) : (
                                 <>
+                                    <div className="post-header-user">
+                                        <div
+                                            className="post-user-avatar"
+                                            style={{
+                                                backgroundImage: user?.image_url ? `url(${user.image_url})` : undefined,
+                                            }}
+                                        >
+                                            {!user?.image_url && (user?.name?.charAt(0).toUpperCase() || '?')}
+                                        </div>
+                                        <div className="post-user-info">
+                                            <span className="post-user-name">{user?.name || 'Usuario'}</span>
+                                            {post.created_at && (
+                                                <span className="post-user-date">{formatRelativeDate(post.created_at)}</span>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     <p>{post.content}</p>
                                     {(post.image_url || post.image_path) && (
                                         <div className="post-image-wrap">
@@ -509,13 +526,7 @@ const MisPosts = () => {
                                             />
                                         </div>
                                     )}
-                                    <div className="post-meta">
-                                        <div>
-                                            <span className="label">#{index + 1}</span>
-                                            {post.created_at && (
-                                                <span className="post-date">{formatRelativeDate(post.created_at)}</span>
-                                            )}
-                                        </div>
+                                    <div className="post-meta" style={{ marginTop: '0.25rem' }}>
                                         <div className="post-actions">
                                             <button
                                                 type="button"

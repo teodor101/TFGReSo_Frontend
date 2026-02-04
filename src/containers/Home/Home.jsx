@@ -397,7 +397,24 @@ const Home = () => {
                 </form>
               ) : (
                 <>
-                  <p>{post.content}</p>{console.log(post)}
+                  <div className="post-header-user">
+                    <div
+                      className="post-user-avatar"
+                      style={{
+                        backgroundImage: post.user?.image_url ? `url(${post.user.image_url})` : undefined,
+                      }}
+                    >
+                      {!post.user?.image_url && (post.user?.name?.charAt(0).toUpperCase() || '?')}
+                    </div>
+                    <div className="post-user-info">
+                      <span className="post-user-name">{post.user?.name || 'Usuario desconocido'}</span>
+                      {post.created_at && (
+                        <span className="post-user-date">{formatRelativeDate(post.created_at)}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <p>{post.content}</p>
                   {(post.image_url || post.image_path) && (
                     <div className="post-image-wrap">
                       <img
@@ -407,13 +424,7 @@ const Home = () => {
                       />
                     </div>
                   )}
-                  <div className="post-meta">
-                    <div>
-                      <span className="label">Por: {post.user?.name || 'Usuario desconocido'}</span>
-                      {post.created_at && (
-                        <span className="post-date">{formatRelativeDate(post.created_at)}</span>
-                      )}
-                    </div>
+                  <div className="post-meta" style={{ marginTop: '0.25rem' }}>
                     <div className="post-actions">
                       <button
                         type="button"

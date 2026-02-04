@@ -113,8 +113,13 @@ const UserProfile = () => {
     return (
         <section className="page-card">
             <div className="user-profile-header">
-                <div className="user-avatar-large">
-                    {profileUser.name.charAt(0).toUpperCase()}
+                <div className="user-avatar-large" style={{
+                    backgroundImage: profileUser.image_url ? `url(${profileUser.image_url})` : 'none',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    overflow: 'hidden'
+                }}>
+                    {!profileUser.image_url && profileUser.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="user-profile-info">
                     <h2>{profileUser.name}</h2>

@@ -10,6 +10,8 @@ const Profile = () => {
         name: "",
         email: ""
     });
+    const [image, setImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [feedback, setFeedback] = useState({
         type: "",
@@ -66,6 +68,9 @@ const Profile = () => {
                 name: user.name || "",
                 email: user.email || "",
             });
+            if (user.image_url) {
+                setImagePreview(user.image_url);
+            }
             // Cargar datos adicionales cuando user esté disponible
             if (token && user.id) {
                 fetchUserData();
@@ -80,6 +85,14 @@ const Profile = () => {
         });
     };
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setImage(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!token) return;
@@ -87,11 +100,25 @@ const Profile = () => {
         try {
             setIsSubmitting(true);
             setFeedback({ type: "", message: "" });
-            await axios.put("https://tfgreso-backend.onrender.com/api/profile", formData, {
+
+            const data = new FormData();
+            data.append('name', formData.name);
+            data.append('email', formData.email);
+            data.append('_method', 'PUT'); // Truco para enviar PUT con FormData en Laravel
+
+            if (image) {
+                data.append('image', image);
+            }
+
+            // Nota: Al usar FormData con ficheros, axios a veces necesita POST con _method=PUT para Laravel
+            // Vamos a intentar con POST y _method=PUT
+            await axios.post("https://tfgreso-backend.onrender.com/api/profile", data, {
                 headers: {
-                    Authorization: "Bearer " + token
+                    Authorization: "Bearer " + token,
+                    'Content-Type': 'multipart/form-data'
                 }
             });
+
             setFeedback({ type: "success", message: "Perfil actualizado correctamente." });
             setIsEditing(false);
             getProfile();
@@ -156,6 +183,27 @@ const Profile = () => {
             {isEditing ? (
                 <form className="form" onSubmit={handleSubmit}>
                     <h2>Editar perfil</h2>
+
+                    <div className="form-group" style={{ alignItems: 'center', marginBottom: '1rem' }}>
+                        <div className="user-avatar-large" style={{
+                            backgroundImage: imagePreview ? `url(${imagePreview})` : 'none',
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            overflow: 'hidden'
+                        }}>
+                            {!imagePreview && (formData.name ? formData.name.charAt(0).toUpperCase() : 'U')}
+                        </div>
+                        <label className="btn btn-secondary" style={{ marginTop: '1rem', cursor: 'pointer' }}>
+                            Cambiar foto
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                style={{ display: 'none' }}
+                            />
+                        </label>
+                    </div>
+
                     <div className="form-group">
                         <label className="form-label" htmlFor="name">Nombre completo</label>
                         <input
@@ -202,8 +250,13 @@ const Profile = () => {
             ) : (
                 <>
                     <div className="user-profile-header">
-                        <div className="user-avatar-large">
-                            {user.name.charAt(0).toUpperCase()}
+                        <div className="user-avatar-large" style={{
+                            backgroundImage: user.image_url ? `url(${user.image_url})` : 'none',
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            overflow: 'hidden'
+                        }}>
+                            {!user.image_url && user.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="user-profile-info">
                             <h2>{user.name}</h2>

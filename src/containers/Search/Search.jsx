@@ -83,8 +83,13 @@ const Search = () => {
                             className="user-item"
                             onClick={() => handleUserClick(user.id)}
                         >
-                            <div className="user-avatar">
-                                {user.name.charAt(0).toUpperCase()}
+                            <div className="user-avatar" style={{
+                                backgroundImage: user.image_url ? `url(${user.image_url})` : 'none',
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                overflow: 'hidden'
+                            }}>
+                                {!user.image_url && user.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="user-info">
                                 <strong className="user-name">{user.name}</strong>

@@ -891,3 +891,10 @@
     font-size: 1.1rem;
   }
 }
+
+/* Follow Button */
+.follow-btn {
+  margin-top: 0.75rem;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.9rem;
+}

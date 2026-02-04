@@ -11,17 +11,28 @@ const UserProfile = () => {
     const [posts, setPosts] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [isFollowing, setIsFollowing] = useState(false)
+    const [followersCount, setFollowersCount] = useState(0)
+    const [followLoading, setFollowLoading] = useState(false)
 
     useEffect(() => {
         const fetchUserProfile = async () => {
             try {
                 setLoading(true)
                 setError(null)
+
+                const config = token ? {
+                    headers: { Authorization: `Bearer ${token}` }
+                } : {}
+
                 const response = await axios.get(
-                    `https://tfgreso-backend.onrender.com/api/users/${id}`
+                    `https://tfgreso-backend.onrender.com/api/users/${id}`,
+                    config
                 )
                 setProfileUser(response.data.user)
                 setPosts(response.data.posts)
+                setIsFollowing(response.data.user.is_following || false)
+                setFollowersCount(response.data.user.followers_count || 0)
             } catch (err) {
                 console.error('Error al cargar perfil:', err)
                 setError('No se pudo cargar el perfil del usuario')
@@ -37,7 +48,31 @@ const UserProfile = () => {
         }
 
         fetchUserProfile()
-    }, [id, currentUser, navigate])
+    }, [id, currentUser, navigate, token])
+
+    const handleToggleFollow = async () => {
+        if (!token) {
+            navigate('/login')
+            return
+        }
+
+        try {
+            setFollowLoading(true)
+            const response = await axios.post(
+                `https://tfgreso-backend.onrender.com/api/users/${id}/follow`,
+                {},
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            )
+            setIsFollowing(response.data.is_following)
+            setFollowersCount(response.data.followers_count)
+        } catch (err) {
+            console.error('Error al seguir/dejar de seguir:', err)
+        } finally {
+            setFollowLoading(false)
+        }
+    }
 
     const formatDate = (dateString) => {
         const date = new Date(dateString)
@@ -84,6 +119,19 @@ const UserProfile = () => {
                 <div className="user-profile-info">
                     <h2>{profileUser.name}</h2>
                     <p className="user-email-profile">{profileUser.email}</p>
+                    {token && (
+                        <button
+                            className={`btn ${isFollowing ? 'btn-secondary' : 'btn-primary'} follow-btn`}
+                            onClick={handleToggleFollow}
+                            disabled={followLoading}
+                        >
+                            {followLoading
+                                ? 'Cargando...'
+                                : isFollowing
+                                    ? 'Dejar de seguir'
+                                    : 'Seguir'}
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -93,7 +141,7 @@ const UserProfile = () => {
                     <span className="stat-label">Posts</span>
                 </div>
                 <div className="stat-item">
-                    <span className="stat-number">{profileUser.followers_count || 0}</span>
+                    <span className="stat-number">{followersCount}</span>
                     <span className="stat-label">Seguidores</span>
                 </div>
                 <div className="stat-item">
